@@ -8,16 +8,22 @@ Based on odoo/odoo.py.
 * git
 * postgres
 * Packages required by Odoo:
-`sudo apt-get install graphviz ghostscript postgresql-client \`
-`python-dateutil python-feedparser python-gdata \`
-`python-ldap python-libxslt1 python-lxml python-mako \`
-`python-openid python-psycopg2 python-pybabel python-pychart \`
-`python-pydot python-pyparsing python-reportlab python-simplejson \`
-`python-tz python-vatnumber python-vobject python-webdav \`
-`python-werkzeug python-xlwt python-yaml python-imaging \`
-`python-matplotlib`
+`sudo apt-get install graphviz ghostscript postgresql-client `
+`python-dateutil python-feedparser python-gdata `
+`python-ldap python-libxslt1 python-lxml python-mako `
+`python-openid python-psycopg2 python-pybabel python-pychart `
+`python-pydot python-pyparsing python-reportlab python-simplejson `
+`python-tz python-vatnumber python-vobject python-webdav `
+`python-werkzeug python-xlwt python-yaml python-imaging `
+`python-matplotlib python-decorator python-requests python-passlib`
 
 ## How to use
+
+### Download script
+
+`mkdir odoo-dev`
+`cd odoo-dev`
+`wget https://raw.githubusercontent.com/soltic-ar/odoo-dev/master/odoo.py`
 
 ### Create a environment **sample**
 
@@ -25,13 +31,15 @@ Based on odoo/odoo.py.
 
 ```
 repository:
+
   # The odoo repository
   - 
     url: https://github.com/odoo/odoo.git
     folder: odoo
     branch: master
     folder-addons: odoo/openerp/addons,odoo/addons
-  # Other repositories modules
+
+  # Other modules repositories 
   -
     url: git@github.com:mycompany/myrepo.git
     folder: addons-mycompany
@@ -46,11 +54,11 @@ repository:
 Where:
 
 * url: The repository url
-* folder: The target directory repository
-* branch: The branch to use
+* folder: The destination directory
+* branch: The branch of work
 * folder-addons (optional): To be added to the addons-path odoo (If not specified takes the *folder* attribute)
 
-2- Assign *sample.yml* as the default environment: 
+2- Assign *sample.yml* as the current environment: 
     
 `./odoo.py set sample.yml`
 

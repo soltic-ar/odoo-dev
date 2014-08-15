@@ -5,8 +5,8 @@
 # Script for different odoo 7.0+ development environments.
 # Based on odoo/odoo.py.
 #
-# wget -O- https://raw.githubusercontent.com/soltic-ar/odoo/master/odoo.py | python
-#
+# wget https://raw.githubusercontent.com/soltic-ar/odoo-dev/master/odoo.py
+# 
 #----------------------------------------------------------
 import os
 import re
@@ -73,8 +73,8 @@ def cmd_init(args=[]):
         try:
             run('git', 'clone', rep['url'], rep['folder'])
             os.chdir("%s/%s"%(rootdir,rep['folder']))
-            run('git', 'checkout', rep['branch'])
-            os.chdir("../")
+            run('git', 'checkout', "%s"%rep['branch'])
+            os.chdir(rootdir)
         except:
             pass
 
@@ -107,7 +107,23 @@ def cmd_checkout(args=[]):
         printf(rep['folder']+'-'*(40-len(rep['folder'])))
         try:
             os.chdir("%s/%s"%(rootdir,rep['folder']))
+            # stash current state
+            try:
+                msg='stash(%s)'%(subprocess.check_output(["git branch | grep '*'"], shell=True)).strip()[2:]
+                run('git', 'stash', 'save', msg)
+            except:
+                pass
+            # checkout
             run('git', 'checkout', '%s'%rep['branch'])
+            # apply stash if exist
+            try:
+                msg='stash(%s)'%rep['branch']
+                find=subprocess.check_output(["git stash list | grep '%s'"%msg], shell=True)
+                stash=find[:(find.find('}:'))+1]
+                run('git', 'stash', 'apply', stash)
+                run('git', 'stash', 'drop', stash)
+            except:
+                pass
         except:
             pass
 
