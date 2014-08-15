@@ -8,22 +8,26 @@ Based on odoo/odoo.py.
 * git
 * postgres
 * Packages required by Odoo:
-`sudo apt-get install graphviz ghostscript postgresql-client `
-`python-dateutil python-feedparser python-gdata `
-`python-ldap python-libxslt1 python-lxml python-mako `
-`python-openid python-psycopg2 python-pybabel python-pychart `
-`python-pydot python-pyparsing python-reportlab python-simplejson `
-`python-tz python-vatnumber python-vobject python-webdav `
-`python-werkzeug python-xlwt python-yaml python-imaging `
-`python-matplotlib python-decorator python-requests python-passlib`
+```
+sudo apt-get install graphviz ghostscript postgresql-client
+python-dateutil python-feedparser python-gdata
+python-ldap python-libxslt1 python-lxml python-mako
+python-openid python-psycopg2 python-pybabel python-pychart
+python-pydot python-pyparsing python-reportlab python-simplejson
+python-tz python-vatnumber python-vobject python-webdav
+python-werkzeug python-xlwt python-yaml python-imaging
+python-matplotlib python-decorator python-requests python-passlib
+```
 
 ## How to use
 
 ### Download script
 
-`mkdir odoo-dev`
-`cd odoo-dev`
-`wget https://raw.githubusercontent.com/soltic-ar/odoo-dev/master/odoo.py`
+```
+mkdir odoo-dev
+cd odoo-dev
+wget https://raw.githubusercontent.com/soltic-ar/odoo-dev/master/odoo.py
+```
 
 ### Create a environment **sample**
 
