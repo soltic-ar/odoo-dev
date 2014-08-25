@@ -148,6 +148,13 @@ def cmd_server(args=[]):
     except:
         pass    
 
+def cmd_scaffold(args=[]):
+    try:
+        if os.path.isfile('./odoo/odoo.py'):
+            run(['./odoo/odoo.py', 'scaffold'] + args)
+    except:
+        pass    
+
 def cmd_help():
     print "usage: odoo.py <command> [<args>]"
     print "Commands:"
@@ -160,6 +167,7 @@ def cmd_help():
     print "    log [<args>]        Shows log. Supports own arguments 'git log'"
     print "   odoo:"
     print "    server [<args>]     Starts odoo server. Supports own arguments odoo server"
+    print "    scaffold [<args>]   Generates a base module for development. Supports own arguments odoo scaffold (only for version 8.0 +)"
 
 def main():
     # regsitry of commands
