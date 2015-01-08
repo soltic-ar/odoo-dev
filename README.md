@@ -1,7 +1,7 @@
 # odoo-dev
 
-Script for different odoo 7.0+ development environments.
-Based on odoo/odoo.py.
+Script for different odoo 7.0+ development environments using configuration file odoo own.
+Based on github.com/odoo/odoo/odoo.py
 
 ## Dependencies
 
@@ -19,6 +19,8 @@ python-werkzeug python-xlwt python-yaml python-imaging
 python-matplotlib python-decorator python-requests python-passlib
 ```
 
+https://doc.odoo.com/7.0/install/linux/server/#installing-the-required-packages
+
 ## How to use
 
 ### Download script
@@ -31,44 +33,44 @@ wget https://raw.githubusercontent.com/soltic-ar/odoo-dev/master/odoo.py
 
 ### Create a environment **sample**
 
-1- Create *sample.yml* file with the definition of the repositories:
+1- Create *sample.conf* file with the definition of the repositories:
 
 ```
-repository:
+;---------------------------------------
+; Odoo configuration
+;---------------------------------------
 
-  # The odoo repository
-  - 
-    url: https://github.com/odoo/odoo.git
-    folder: odoo
-    branch: master
-    folder-addons: odoo/openerp/addons,odoo/addons
+[options]
 
-  # Other modules repositories 
-  -
-    url: git@github.com:mycompany/myrepo.git
-    folder: addons-mycompany
-    branch: master
-  -
-    url: https://my-company.com/repos/other.git
-    folder: addons-other
-    branch: master
-    folder-addons: addons-other/addons
+addons_path = addons-mycompany,addons-other
+log_level = debug
+
+;---------------------------------------
+; Addons repositories configuration
+;---------------------------------------
+
+[odoo]
+url = https://github.com/odoo/odoo.git
+branch = 8.0
+
+[addons-mycompany]
+url = git@github.com:mycompany/myrepo.git
+branch = 8.0
+
+[addons-other]
+url = git@github.com:mycompany/other.git
+branch = 8.0
+
 ```
 
 Where:
 
 * url: The repository url
-* folder: The destination directory
 * branch: The branch of work
-* folder-addons (optional): To be added to the addons-path odoo (If not specified takes the *folder* attribute)
 
-2- Assign *sample.yml* as the current environment: 
-    
-`./odoo.py set sample.yml`
+2- Initialize repositories
 
-3- Initialize repositories
-
-`./odoo.py init`
+`./odoo.py init sample.conf`
  
 ### Development
 
@@ -92,5 +94,5 @@ Show current environment
 
 Change of environment
 
-`./odoo.py set another.yml`
+`./odoo.py checkout another.conf`
 

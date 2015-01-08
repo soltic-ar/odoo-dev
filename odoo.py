@@ -3,16 +3,15 @@
 #----------------------------------------------------------
 #
 # Script for different odoo 7.0+ development environments.
-# Based on odoo/odoo.py.
+# Based on github.com/odoo/odoo/odoo.py.
 #
 # wget https://raw.githubusercontent.com/soltic-ar/odoo-dev/master/odoo.py
 # 
 #----------------------------------------------------------
 import os
-import re
 import sys
 import subprocess
-import yaml
+from ConfigParser import SafeConfigParser
 
 def printf(f,*l):
     print "odoo-dev: " + f % l
@@ -27,103 +26,131 @@ def run(*l):
 # Environment
 #--------------------------------------
 
-def get_currentenv():
+def get_current():
     try:
         f = open('.conf', 'r')
-        return f.readline()
+        return (f.readline()).strip()
     except:
-        pass
+        print "Unexpected error:", sys.exc_info()[1]
 
-def load_dataenv():
-    try:
-        f = get_currentenv()
-        stream = open(f, "r")
-        return yaml.load(stream)
-    except:
-        pass
-
-def cmd_current(args=[]):
-    printf("current '%s'", get_currentenv())
-
-def cmd_set(args=[]):
+def set_current(args=[]):
     if len(args)==1:
         if os.path.isfile('./%s'%args[0]):
-            try:
-                f = open('.conf', "w")
-                f.write(args[0])
-                f.close()
-                cmd_checkout()
-                printf("current is now '%s'", args[0])
-            except:
-                print "Unexpected error:", sys.exc_info()[0]
+            if get_current()!=args[0]:
+                try:
+                    f = open('.conf', "w")
+                    f.write(args[0])
+                    f.close()
+                    printf("current is now '%s'", get_current())
+                    return True
+                except:
+                    print "Unexpected error:", sys.exc_info()[1]
         else:
-            printf("The %s environment does not exist!"%args[0])
-    return True
+            print "The %s file does not exist!"%args[0]
+    return False
 
-dataenv=load_dataenv()
+def cmd_current(args=[]):
+    printf("current '%s'", get_current())
+
+rootdir = os.getcwd()
+parser = SafeConfigParser()
+parser.read(get_current())
+addons_dev = [section_name for section_name in parser.sections() if section_name!='options']
 
 #--------------------------------------
 # Versioning
 #--------------------------------------
 
 def cmd_init(args=[]):
-    rootdir=os.getcwd()
-    for rep in dataenv['repository']:
-        printf('-'*40)
+
+    # read new current
+    os.chdir(rootdir)
+    new_parser = SafeConfigParser()
+    new_parser.read(args[0])
+    new_addons_dev = [section_name for section_name in new_parser.sections() if section_name!='options']
+
+    for rep in new_addons_dev:
+        printf(rep+'-'*(40-len(rep)))
         try:
-            run('git', 'clone', rep['url'], rep['folder'])
-            os.chdir("%s/%s"%(rootdir,rep['folder']))
-            run('git', 'checkout', "%s"%rep['branch'])
-            os.chdir(rootdir)
+            run('git', 'clone', new_parser.get(rep, 'url'), rep)
         except:
             pass
+
+    cmd_checkout(args)
 
 def cmd_pull(args=[]):
-    cmd_current()
-    rootdir=os.getcwd()
-    for rep in dataenv['repository']:
-        printf(rep['folder']+'-'*(40-len(rep['folder'])))
+    for rep in addons_dev:
+        printf(rep+'-'*(40-len(rep)))
         try:
-            os.chdir("%s/%s"%(rootdir,rep['folder']))
-            run('git', 'pull', 'origin', '%s'%rep['branch'])
+            os.chdir("%s/%s"%(rootdir,rep))
+            run('git', 'pull', 'origin', '%s'%parser.get(rep, 'branch'))
         except:
-            pass
+            print "Unexpected error:", sys.exc_info()[1]
 
 def cmd_log(args=[]):
-    cmd_current()
-    rootdir=os.getcwd()
-    for rep in dataenv['repository']:
-        printf(rep['folder']+'-'*(40-len(rep['folder'])))
+    for rep in addons_dev:
+        printf(rep+'-'*(40-len(rep)))
         try:
-            os.chdir("%s/%s"%(rootdir,rep['folder']))
+            os.chdir("%s/%s"%(rootdir,rep))
             run(['git', 'log', '-1']+args)
         except:
-            pass
+            print "Unexpected error:", sys.exc_info()[1]
+
+def cmd_status(args=[]):
+    for rep in addons_dev:
+        printf(rep+'-'*(40-len(rep)))
+        try:
+            os.chdir("%s/%s"%(rootdir,rep))
+            run('git', 'status')
+        except:
+            print "Unexpected error:", sys.exc_info()[1]
+
+def cmd_branch(args=[]):
+    for rep in addons_dev:
+        printf(rep+'-'*(40-len(rep)))
+        try:
+            os.chdir("%s/%s"%(rootdir,rep))
+            run('git', 'branch')
+        except:
+            print "Unexpected error:", sys.exc_info()[1]
 
 def cmd_checkout(args=[]):
-    rootdir=os.getcwd()
-    dataenv= load_dataenv()
-    for rep in dataenv['repository']:
-        printf(rep['folder']+'-'*(40-len(rep['folder'])))
+    current = get_current()
+    if not set_current(args):
+        return False
+
+    printf("Save local changes...")
+    for rep in addons_dev:
         try:
-            os.chdir("%s/%s"%(rootdir,rep['folder']))
-            # stash current state
-            try:
-                msg='stash(%s)'%(subprocess.check_output(["git branch | grep '*'"], shell=True)).strip()[2:]
-                run('git', 'stash', 'save', msg)
-            except:
-                pass
-            # checkout
-            run('git', 'checkout', '%s'%rep['branch'])
-            # apply stash if exist
-            try:
-                msg='stash(%s)'%rep['branch']
-                find=subprocess.check_output(["git stash list | grep '%s'"%msg], shell=True)
-                stash=find[:(find.find('}:'))+1]
-                run('git', 'stash', 'apply', stash)
-                run('git', 'stash', 'drop', stash)
-            except:
-                pass
+            printf(rep+'-'*(40-len(rep)))
+            os.chdir("%s/%s"%(rootdir,rep))
+            msg='stash_%s(%s)'%(current, (subprocess.check_output(["git branch | grep '*'"], shell=True)).strip()[2:])
+            run('git', 'stash', 'save', msg)
+        except:
+            print "Unexpected error:", sys.exc_info()[1]
+
+    # read new current
+    os.chdir(rootdir)
+    current = get_current()
+    new_parser = SafeConfigParser()
+    new_parser.read(current)
+    new_addons_dev = [section_name for section_name in new_parser.sections() if section_name!='options']
+
+    printf("Checkout and restore local changes...")
+    for rep in new_addons_dev:
+        try:
+            printf(rep+'-'*(40-len(rep)))
+            os.chdir("%s/%s"%(rootdir,rep))
+            run('git', 'checkout', '%s'%new_parser.get(rep, 'branch'))
+        except:
+            print "Unexpected error:", sys.exc_info()[1]
+        # apply stash if exist
+        try:
+            msg='stash_%s(%s)'%(current, new_parser.get(rep, 'branch'))
+            find=subprocess.check_output(["git stash list | grep '%s'"%msg], shell=True)
+            stash=find[:(find.find('}:'))+1]
+            run('git', 'stash', 'apply', stash)
+            run('git', 'stash', 'drop', stash)
         except:
             pass
 
@@ -132,19 +159,19 @@ def cmd_checkout(args=[]):
 #--------------------------------------
 
 def cmd_server(args=[]):
-    cmd_current()
-    addons=[]
-    for rep in dataenv['repository']:
-        try:
-            addons.append(rep['folder-addons'])
-        except:
-            addons.append(rep['folder'])
+    # Path to libreoffice (required for aeroo)
+    # TODO: Detect and automatically load.
+    check = os.environ['PYTHONPATH'] if os.environ.has_key('PYTHONPATH') else ''
+    if parser.has_option('options', 'office_path') and not check.find(parser.get('options', 'office_path'))>0:
+        printf("WARNING! office_path not found in PYTHONPATH (required for Aeroo). Run: 'export PYTHONPATH=$PYTHONPATH:%s'."%parser.get('options', 'office_path'))
+        return False
+
     try:
         if os.path.isfile('./odoo/odoo.py'):
-            run(['./odoo/odoo.py', 'server', '--addons-path=%s'%",".join(addons)] + args)
+            run(['./odoo/odoo.py', 'server', '--config=%s'%get_current()] + args)
         else: 
             # old version
-            run(['./odoo/openerp-server', '--addons-path=%s'%",".join(addons)] + args)
+            run(['./odoo/openerp-server', '--config=%s'%get_current()] + args)
     except:
         pass    
 
@@ -155,29 +182,31 @@ def cmd_scaffold(args=[]):
     except:
         pass    
 
-def cmd_help():
+def cmd_help(args=[]):
     print "usage: odoo.py <command> [<args>]"
     print "Commands:"
     print "   environment:"
-    print "    set <sample>        Sets an environment"
+    print "    init <sample>       Initializes <sample> environment downloading repositories"
     print "    current             Shows the current environment"
+    print "    checkout <sample>   Change to <sample> environment"
     print "   versioning:"
-    print "    init                Initializes current environment downloading repositories"
     print "    pull                Upgrade repositories current environment"
+    print "    status              Shows status repositories current environment"
     print "    log [<args>]        Shows log. Supports own arguments 'git log'"
     print "   odoo:"
     print "    server [<args>]     Starts odoo server. Supports own arguments odoo server"
-    print "    scaffold [<args>]   Generates a base module for development. Supports own arguments odoo scaffold (only for version 8.0 +)"
+    print "    scaffold [<args>]   Generates a base module for development. Supports own arguments odoo scaffold (only for version 8.0+)"
 
 def main():
     # regsitry of commands
     g = globals()
     cmds = dict([(i[4:],g[i]) for i in g if i.startswith('cmd_')])
-    if len(sys.argv) >1 and sys.argv[1] in cmds:
+    if len(sys.argv) >1 and sys.argv[1] in cmds:     
+        if sys.argv[1:][0]!='current': 
+            cmd_current()
         cmds[sys.argv[1]]( sys.argv[2:] )    
     else:
         cmd_help()
 
 if __name__ == "__main__":
     main()
-
