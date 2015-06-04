@@ -27,11 +27,11 @@ def run(*l):
 #--------------------------------------
 
 def get_current():
-    try:
-        f = open('.conf', 'r')
-        return (f.readline()).strip()
-    except:
-        print "Unexpected error:", sys.exc_info()[1]
+    if not os.path.isfile('.conf'):
+        f = open('.conf', "w")
+        f.write("")
+    f = open('.conf', 'r')
+    return (f.readline()).strip()
 
 def set_current(args=[]):
     if len(args)==1:
