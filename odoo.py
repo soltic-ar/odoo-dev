@@ -169,6 +169,8 @@ def cmd_server(args=[]):
     try:
         if os.path.isfile('./odoo/odoo.py'):
             run(['./odoo/odoo.py', 'server', '--config=%s'%get_current()] + args)
+        elif os.path.isfile('./odoo/odoo-bin'):
+            run(['./odoo/odoo-bin', 'server', '--config=%s'%get_current()] + args)
         else: 
             # old version
             run(['./odoo/openerp-server', '--config=%s'%get_current()] + args)
